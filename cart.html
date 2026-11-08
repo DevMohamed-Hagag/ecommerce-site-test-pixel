@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart — ShopWave</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">ShopWave</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html" class="active">Cart <span class="cart-count" id="nav-count">0</span></a>
+      </nav>
+      <button class="menu-btn" id="menu-btn" aria-label="menu">&#9776;</button>
+    </div>
+    <div class="mobile-nav" id="mobile-nav">
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html">Cart</a>
+    </div>
+  </header>
+
+  <div class="page-header">
+    <div class="container"><h1>Your Cart</h1></div>
+  </div>
+
+  <section class="cart-section">
+    <div class="container cart-layout">
+
+      <div class="cart-items" id="cart-items">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="cart-summary" id="cart-summary">
+        <!-- filled by JS -->
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <footer class="footer">
+    <div class="footer-bottom">© 2026 ShopWave. All rights reserved.</div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    function renderCart() {
+      const cart = getCart();
+      const itemsEl = document.getElementById('cart-items');
+      const summaryEl = document.getElementById('cart-summary');
+      updateCartCount();
+
+      if (cart.length === 0) {
+        itemsEl.innerHTML = '<div class="cart-empty"><p>Your cart is empty.</p><a href="products.html" class="btn-primary">Continue Shopping</a></div>';
+        summaryEl.innerHTML = '';
+        return;
+      }
+
+      let subtotal = 0;
+      itemsEl.innerHTML = cart.map(item => {
+        subtotal += item.price * item.qty;
+        return `
+          <div class="cart-row">
+            <img src="${item.image}" alt="${item.name}" />
+            <div class="cart-info">
+              <strong>${item.name}</strong>
+              <span class="cart-cat">${item.category}</span>
+              <div class="qty-row">
+                <button onclick="changeQty(${item.id}, -1)">−</button>
+                <span>${item.qty}</span>
+                <button onclick="changeQty(${item.id}, 1)">+</button>
+                <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+              </div>
+            </div>
+            <span class="cart-price">$${(item.price * item.qty).toFixed(2)}</span>
+          </div>`;
+      }).join('');
+
+      const shipping = subtotal >= 75 ? 0 : 7.99;
+      const total = subtotal + shipping;
+
+      summaryEl.innerHTML = `
+        <div class="summary-box">
+          <h3>Order Summary</h3>
+          <div class="summary-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+          <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? '<em>Free</em>' : '$' + shipping.toFixed(2)}</span></div>
+          <div class="summary-row total-row"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+          ${subtotal < 75 ? `<p class="ship-note">Add $${(75 - subtotal).toFixed(2)} more for free shipping.</p>` : '<p class="ship-note free">🎉 You qualify for free shipping!</p>'}
+          <button class="btn-primary full-width" onclick="checkout()">Checkout</button>
+          <a href="products.html" class="btn-ghost full-width">Continue Shopping</a>
+        </div>`;
+    }
+
+    function changeQty(id, delta) {
+      let cart = getCart();
+      cart = cart.map(i => i.id === id ? {...i, qty: Math.max(1, i.qty + delta)} : i);
+      saveCart(cart);
+      renderCart();
+    }
+
+    function removeItem(id) {
+      let cart = getCart().filter(i => i.id !== id);
+      saveCart(cart);
+      renderCart();
+      showToast('Item removed');
+    }
+
+    function checkout() {
+      saveCart([]);
+      renderCart();
+      showToast('Order placed! Thank you 🎉');
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>
